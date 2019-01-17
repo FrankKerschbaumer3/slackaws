@@ -23,3 +23,5 @@ Type: CloudWatchEvent
                   - SUCCEEDED
                   - FAILED
 ```
+When sucessful you will get a notification that looks like below.
+![Slack_Notification](https://github.com/FrankKerschbaumer3/slackaws/blob/dev/images/Image.png)
