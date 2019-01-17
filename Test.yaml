@@ -1,0 +1,142 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: An AWS Serverless Specification template describing your function.
+Parameters:
+    SlackHook:
+      Type: String
+      Description: URL of Slack notification
+    #Channel:
+    #  Type: String
+    #  Description: Name of Slack Channel
+Resources:
+  Test2:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs8.10
+      InlineCode: |
+        'use strict';
+        
+        const https = require('https');
+        const url = require('url');
+    
+        var functions = {};
+        
+        //
+        // Post a message to the slack hook.
+        //
+        functions.slack = function(text, hook_url, done) {
+            const slack_hook_url_parts =
+                url.parse(hook_url);
+            
+            //const CHANNEL = process.env.CHANNEL;
+
+            const options = {
+                hostname: slack_hook_url_parts.host,
+                port: 443,
+                path: slack_hook_url_parts.pathname,
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            };
+            console.log(JSON.stringify(options));
+        
+            var req = https.request(options, function(res) {
+                res.setEncoding('utf8');
+                res.on('data', function(chunk) {
+                    console.log('data');
+                    done(null, chunk);
+                });
+                res.on('end', function() {
+                    console.log('end');
+                    done(null, null);
+                });
+            });
+        
+            req.on('error', function(err) {
+                done(err, null);
+            });
+        
+            // write data to request body
+            req.write(JSON.stringify({
+                username: "CodeBuildBot",
+                //channel: process.env.CHANNEL
+                text: text,
+                icon_emoji: ":codebuild:"
+                
+            }));
+            req.end();
+        };
+        
+        //
+        // Handle the CodeBuild CloudWatch Event and post the message to slack so we know the progress of our build.
+        //
+        functions.handler = function(event, context) {
+        
+            console.log(JSON.stringify(event));
+        
+            const status = event.detail['build-status'];
+            const project = event.detail['project-name'];
+        
+            // If failed.  Get logs path.
+            var text = project+'\n'+' '+status;
+            if (status === 'FAILED') {
+                text += '\n';
+                text += 'https://console.aws.amazon.com/cloudwatch/home?region='+event.region+'#logEventViewer:group=/aws/codebuild/'+project+';start=PT5M';
+            }
+        
+            const SLACK_HOOK_URL = process.env.SLACK_HOOK_URL;
+            functions.slack(text, SLACK_HOOK_URL, function(err, results) {
+                if (err) return context.fail(err);
+                else return context.succeed(results);
+            });
+        };
+        
+        module.exports = functions;
+      Description: ''
+      MemorySize: 128
+      Timeout: 3
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Events:
+        CloudWatchEvent1:
+          Type: CloudWatchEvent
+          Properties:
+            Pattern:
+              detail-type:
+                - CodeBuild Build State Change
+              source:
+                - aws.codebuild
+              detail:
+                project-name:
+                  - testing
+                build-status:
+                  - IN_PROGRESS
+                  - SUCCEEDED
+                  - FAILED
+      Environment:
+        Variables:
+          SLACK_HOOK_URL: !Ref SlackHook
+          #CHANNEL: !Ref Channel
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      Policies:
+      - PolicyName: root
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:*
+            Resource: arn:aws:logs:*:*:*
