@@ -28,3 +28,6 @@ Type: CloudWatchEvent
 ```
 When sucessful you will get a notification that looks like below.
 ![Slack_Notification](https://github.com/FrankKerschbaumer3/slackaws/blob/dev/images/Image.png)
+
+Credit goes to https://hackernoon.com/monitor-your-aws-codebuilds-via-lambda-and-slack-ae2c621f68f1 for the code necessary 
+for the lambda function.
