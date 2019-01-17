@@ -5,8 +5,11 @@ Parameters:
     SlackHook:
       Type: String
       Description: URL of Slack notification
+    CodeBuildNames:
+      Type: CommaDelimitedList
+      Description: Names of codebuild jobs to be tied to notifications
 Resources:
-  Test2:
+  SlackHookFunction:
     Type: 'AWS::Serverless::Function'
     Properties:
       Handler: index.handler
@@ -100,8 +103,7 @@ Resources:
               source:
                 - aws.codebuild
               detail:
-                project-name:
-                  - testing
+                project-name: !Ref CodeBuildNames
                 build-status:
                   - IN_PROGRESS
                   - SUCCEEDED
