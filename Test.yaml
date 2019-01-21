@@ -42,12 +42,12 @@ Resources:
             var text = project+'\n'+' '+status;
 
             if (status === 'IN_PROGRESS') {
-                test += '\n'
+                text += '\n'
                 text += projectUrl
             }
 
             if (status === 'SUCCEEDED') {
-              test += '\n'
+              text += '\n'
               text += projectUrl
 
             if (status === 'FAILED') {
