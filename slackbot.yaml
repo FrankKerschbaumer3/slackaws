@@ -1,5 +1,3 @@
-# Author: Frank Kerschbaumer - Levvel, LLC
-
 Transform: 'AWS::Serverless-2016-10-31'
 Description: Template to create a Slack Bot Lambda function to report CodeBuild build status
 
@@ -8,7 +6,7 @@ Parameters:
   AppName:
     Type: String
     Description: Application being deployed
-    Default: audience-finder
+    Default: myapp
 
   SlackHook:
     Type: String
