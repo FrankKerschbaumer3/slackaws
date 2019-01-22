@@ -50,6 +50,16 @@ Resources:
             const project = event.detail['project-name']
             const buildId = event.detail['build-id'].split(":").pop()
             const projectUrl = `https://console.aws.amazon.com/codebuild/home?region=us-east-1#/builds/${project}:${buildId}/view/new`
+            var color = color
+            if (status === 'IN_PROGRESS') {
+                color = "#0000FF"
+            }
+            if (status === 'SUCEEDED') {
+                color = "#3CB371"
+            }
+            if (status === 'FAILED') {
+                color = "#ff0000"
+            }
             const payload = {
                 channel: CHANNEL,
                 username: CodebuildBot,
@@ -66,17 +76,7 @@ Resources:
                     }]
                 }]
             }
-            var color = color
-            if (status === 'IN_PROGRESS') {
-                color = "#0000FF"
-            }
-            if (status === 'SUCEEDED') {
-                color = "#3CB371"
-            }
-            if (status === 'FAILED') {
-                color = "#ff0000"
-            }
-
+            
             postToSlack(payload, SLACK_HOOK_URL, function (err, results) {
                 if (err) return context.fail(err)
                 else return context.succeed(results)
