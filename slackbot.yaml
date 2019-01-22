@@ -62,7 +62,7 @@ Resources:
             }
             const payload = {
                 channel: CHANNEL,
-                username: CodebuildBot,
+                username: "CodebuildBot",
                 attachments: [{
                     color: color,
                     icon_emoji: ":codebuild:",
