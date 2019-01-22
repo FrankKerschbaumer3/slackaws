@@ -34,23 +34,38 @@ Resources:
       Role: !GetAtt LambdaExecutionRole.Arn
       InlineCode: |
         'use strict'
-        
+
         const https = require('https')
         const url = require('url')
-        
+
         const CHANNEL = process.env.CHANNEL
         const SLACK_HOOK_URL = process.env.SLACK_HOOK_URL
-        
+
         // Handle the CodeBuild CloudWatch Event and post the message to slack so we know the progress of our build.
         function handler(event, context) {
             console.log(JSON.stringify(event))
-        
+
             const status = event.detail['build-status']
-            const creator = event.detail['additional-information']['initiator']
+            const startedBy = event.detail['additional-information']['initiator']
             const project = event.detail['project-name']
             const buildId = event.detail['build-id'].split(":").pop()
             const projectUrl = `https://console.aws.amazon.com/codebuild/home?region=us-east-1#/builds/${project}:${buildId}/view/new`
-        
+            const payload = {
+                channel: CHANNEL,
+                username: CodebuildBot,
+                attachments: [{
+                    color: color,
+                    icon_emoji: ":codebuild:",
+                    author_name: `Started by ${startedBy}`,
+                    title: project,
+                    title_link: projectUrl,
+                    fields: [{
+                        title: "Status",
+                        value: status,
+                        short: false
+                    }]
+                }]
+            }
             var color = color
             if (status === 'IN_PROGRESS') {
                 color = "#0000FF"
@@ -61,19 +76,17 @@ Resources:
             if (status === 'FAILED') {
                 color = "#ff0000"
             }
-        
-            var author_name = `${creator}`
-        
-            postToSlack(color, author_name, project, projectUrl, status, SLACK_HOOK_URL, function (err, results) {
+
+            postToSlack(payload, SLACK_HOOK_URL, function (err, results) {
                 if (err) return context.fail(err)
                 else return context.succeed(results)
             })
         }
-        
+
         // Post a message to the slack hook.
-        function postToSlack(color, author_name, project, projectUrl, status, hook_url, done) {
+        function postToSlack(payload, hook_url, done) {
             const slack_hook_url_parts = url.parse(hook_url)
-        
+
             const options = {
                 hostname: slack_hook_url_parts.host,
                 port: 443,
@@ -83,9 +96,9 @@ Resources:
                     'Content-Type': 'application/json'
                 }
             }
-        
+
             console.log(JSON.stringify(options))
-        
+
             var req = https.request(options, function (res) {
                 res.setEncoding('utf8')
                 res.on('data', function (chunk) {
@@ -97,36 +110,17 @@ Resources:
                     done(null, null)
                 })
             })
-        
+
             req.on('error', function (err) {
                 done(err, null)
             })
-        
+
             // write data to request body
-            req.write(JSON.stringify({
-                channel: CHANNEL,
-                username: "CodeBuildBot",
-                icon_emoji: ":codebuild:",
-                attachments: [
-                    {
-                        color: color,
-                        author_name: `Started by ${author_name}`,
-                        title: project,
-                        title_link: projectUrl,
-                        fields: [
-                            {
-                            title: "Status",
-                            value: status,
-                            short: false,
-                            }
-                        ]
-                    }
-                ]
-            }))
-        
+            req.write(JSON.stringify(payload))
+
             req.end()
         }
-        
+
         module.exports = { handler }
       Events:
         CloudWatchEvent1:
