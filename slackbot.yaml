@@ -37,9 +37,27 @@ Resources:
 
         const https = require('https')
         const url = require('url')
-
+        
         const CHANNEL = process.env.CHANNEL
         const SLACK_HOOK_URL = process.env.SLACK_HOOK_URL
+
+        const Colors = {
+            IN_PROGRESS: "#0000FF",
+            SUCEEDED: "#3CB371",
+            FAILED: "#FF0000"
+        }
+
+        function getColor(status) {
+            switch (status) {
+                case 'SUCEEDED':
+                    return Colors.SUCEEDED
+                case 'FAILED':
+                case 'STOPPED':
+                    return Colors.FAILED
+                default: 
+                    return Colors.IN_PROGRESS
+            }
+        }
 
         // Handle the CodeBuild CloudWatch Event and post the message to slack so we know the progress of our build.
         function handler(event, context) {
@@ -50,22 +68,14 @@ Resources:
             const project = event.detail['project-name']
             const buildId = event.detail['build-id'].split(":").pop()
             const projectUrl = `https://console.aws.amazon.com/codebuild/home?region=us-east-1#/builds/${project}:${buildId}/view/new`
-            var color = color
-            if (status === 'IN_PROGRESS') {
-                color = "#0000FF"
-            }
-            if (status === 'SUCEEDED') {
-                color = "#3CB371"
-            }
-            if (status === 'FAILED') {
-                color = "#ff0000"
-            }
+            const time = Math.floor(Date.now() / 1000)
+
             const payload = {
                 channel: CHANNEL,
                 username: "CodebuildBot",
+                icon_emoji: ":codebuild:",
                 attachments: [{
-                    color: color,
-                    icon_emoji: ":codebuild:",
+                    color: getColor(status),
                     author_name: `Started by ${startedBy}`,
                     title: project,
                     title_link: projectUrl,
@@ -73,10 +83,13 @@ Resources:
                         title: "Status",
                         value: status,
                         short: false
-                    }]
+                    }],
+                    footer: "Incoming Webhooks API",
+                    footer_icon: "https://a.slack-edge.com/ae7f/img/services/outgoing-webhook_512.png",
+                    ts: time
                 }]
             }
-            
+          
             postToSlack(payload, SLACK_HOOK_URL, function (err, results) {
                 if (err) return context.fail(err)
                 else return context.succeed(results)
@@ -98,7 +111,7 @@ Resources:
             }
 
             console.log(JSON.stringify(options))
-
+          
             var req = https.request(options, function (res) {
                 res.setEncoding('utf8')
                 res.on('data', function (chunk) {
@@ -117,8 +130,8 @@ Resources:
 
             // write data to request body
             req.write(JSON.stringify(payload))
-
-            req.end()
+          
+           req.end()
         }
 
         module.exports = { handler }
@@ -137,6 +150,7 @@ Resources:
                   - IN_PROGRESS
                   - SUCCEEDED
                   - FAILED
+                  - STOPPED
       Environment:
         Variables:
           SLACK_HOOK_URL: !Ref SlackHook
