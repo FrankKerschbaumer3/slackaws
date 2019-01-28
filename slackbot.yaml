@@ -128,7 +128,7 @@ Resources:
                 done(err, null)
             })
 
-            // write data to request body
+            // write data to request body_text
             req.write(JSON.stringify(payload))
           
            req.end()
