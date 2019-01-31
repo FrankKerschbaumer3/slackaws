@@ -52,7 +52,6 @@ Resources:
                 case 'SUCEEDED':
                     return Colors.SUCEEDED
                 case 'FAILED':
-                case 'STOPPED':
                     return Colors.FAILED
                 default: 
                     return Colors.IN_PROGRESS
