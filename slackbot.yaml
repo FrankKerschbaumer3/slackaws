@@ -71,7 +71,7 @@ Resources:
 
             const payload = {
                 channel: CHANNEL,
-                username: "CodebuildBot",
+                username: "CodeBuildBot",
                 icon_emoji: ":codebuild:",
                 attachments: [{
                     color: getColor(status),
@@ -85,7 +85,6 @@ Resources:
                     }],
                     footer: "Incoming Webhooks API",
                     footer_icon: "https://a.slack-edge.com/ae7f/img/services/outgoing-webhook_512.png",
-                    ts: time
                 }]
             }
           
