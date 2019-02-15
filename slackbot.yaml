@@ -6,7 +6,7 @@ Parameters:
   AppName:
     Type: String
     Description: Application being deployed
-    Default: myapp
+    Default: audience-finder
 
   SlackHook:
     Type: String
@@ -42,15 +42,15 @@ Resources:
         const SLACK_HOOK_URL = process.env.SLACK_HOOK_URL
 
         const Colors = {
-            IN_PROGRESS: "#0000FF",
-            SUCEEDED: "#3CB371",
-            FAILED: "#FF0000"
+            IN_PROGRESS: "#3D5AFE",
+            SUCCEEDED: "#76FF03",
+            FAILED: "#FF3D00"
         }
 
         function getColor(status) {
             switch (status) {
-                case 'SUCEEDED':
-                    return Colors.SUCEEDED
+                case 'SUCCEEDED':
+                    return Colors.SUCCEEDED
                 case 'FAILED':
                     return Colors.FAILED
                 default: 
@@ -67,7 +67,6 @@ Resources:
             const project = event.detail['project-name']
             const buildId = event.detail['build-id'].split(":").pop()
             const projectUrl = `https://console.aws.amazon.com/codebuild/home?region=us-east-1#/builds/${project}:${buildId}/view/new`
-            const time = Math.floor(Date.now() / 1000)
 
             const payload = {
                 channel: CHANNEL,
@@ -83,8 +82,6 @@ Resources:
                         value: status,
                         short: false
                     }],
-                    footer: "Incoming Webhooks API",
-                    footer_icon: "https://a.slack-edge.com/ae7f/img/services/outgoing-webhook_512.png",
                 }]
             }
           
@@ -148,7 +145,6 @@ Resources:
                   - IN_PROGRESS
                   - SUCCEEDED
                   - FAILED
-                  - STOPPED
       Environment:
         Variables:
           SLACK_HOOK_URL: !Ref SlackHook
